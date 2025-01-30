@@ -1,0 +1,141 @@
+<DialogContent>:
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "180dp"
+    selected_date: ""
+
+    MDTextField:
+        id: title_input
+        hint_text: "Nome da Tarefa"
+        required: True
+        helper_text_mode: "on_error"
+        helper_text: "Este campo é obrigatório"
+        pos_hint: {"center_x": .5}
+        size_hint_x: 1
+
+    MDTextField:
+        id: description_input
+        hint_text: "Descrição (opcional)"
+        multiline: True
+        pos_hint: {"center_x": .5}
+        size_hint_x: 1
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: "48dp"
+        spacing: "8dp"
+        padding: ["0dp", "8dp", "0dp", "0dp"]
+
+        MDLabel:
+            id: date_label
+            text: f"Data: {root.selected_date}"
+            size_hint_x: .7
+
+        MDFlatButton:
+            text: "Alterar Data"
+            on_release: root.show_date_picker()
+
+<ToDoCard>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: "100dp"
+    padding: "16dp"
+    spacing: "8dp"
+    md_bg_color: 1, 1, 1, 1
+    radius: [8]
+    elevation: 3
+
+    canvas.before:
+        Color:
+            rgba: 0.9, 0.9, 0.9, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [8]
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: "40dp"
+        spacing: "8dp"
+        
+        MDLabel:
+            id: title_label
+            text: root.title
+            bold: True
+            font_size: "16sp"
+            strikethrough: root.completed
+            size_hint_x: 0.4
+            halign: "left"
+        
+        MDLabel:
+            text: root.date
+            font_size: "14sp"
+            size_hint_x: 0.3
+            halign: "center"
+        
+        MDCheckbox:
+            id: checkbox
+            size_hint: None, None
+            size: "40dp", "40dp"
+            selected_color: app.theme_cls.primary_color
+            unselected_color: app.theme_cls.primary_light
+            
+        MDIconButton:
+            id: delete_button
+            icon: "delete"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.primary_color
+            size_hint: None, None
+            size: "40dp", "40dp"
+    
+    MDLabel:
+        id: description_label
+        text: root.description
+        font_size: "14sp"
+        strikethrough: root.completed
+        size_hint_y: None
+        height: "30dp"
+        halign: "left"
+
+MDScreen:
+    name: "main"
+    
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "8dp"
+        padding: "16dp"
+
+        MDLabel:
+            text: "Minhas Tarefas"
+            bold: True
+            font_style: "H5"
+            size_hint_y: None
+            height: "48dp"
+            halign: "center"
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            effect_cls: "ScrollEffect"
+            bar_width: "10dp"
+            
+            MDBoxLayout:
+                id: task_container
+                orientation: "vertical"
+                spacing: "8dp"
+                padding: "8dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+        Widget:
+            size_hint_y: None
+            height: "80dp"
+            
+        MDFloatingActionButton:
+            icon: "plus"
+            pos_hint: {"center_x": .85, "center_y": .1}
+            elevation: 4
+            on_release: app.show_task_dialog()
