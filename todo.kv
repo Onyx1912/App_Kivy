@@ -2,8 +2,10 @@
     orientation: "vertical"
     spacing: "12dp"
     size_hint_y: None
-    height: "180dp"
-    selected_date: ""
+    height: "240dp"  # Altura aumentada para incluir o campo de horário
+    # Remova as linhas abaixo para usar as propriedades definidas em Python:
+    # selected_date: ""
+    # selected_time: ""
     
     MDTextField:
         id: title_input
@@ -20,7 +22,7 @@
         multiline: True
         pos_hint: {"center_x": .5}
         size_hint_x: 1
-    
+
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -36,11 +38,27 @@
         MDFlatButton:
             text: "Alterar Data"
             on_release: root.show_date_picker()
+    
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: "48dp"
+        spacing: "8dp"
+        padding: ["0dp", "8dp", "0dp", "0dp"]
+        
+        MDLabel:
+            id: time_label
+            text: "Horário: " + root.selected_time
+            size_hint_x: .7
+        
+        MDFlatButton:
+            text: "Alterar Horário"
+            on_release: root.show_time_picker()
 
 <ToDoCard>:
     orientation: "vertical"
     size_hint_y: None
-    height: "100dp"
+    height: "120dp"
     padding: "16dp"
     spacing: "8dp"
     md_bg_color: 1, 1, 1, 1
@@ -98,6 +116,13 @@
         strikethrough: root.completed
         size_hint_y: None
         height: "30dp"
+        halign: "left"
+
+    MDLabel:
+        text: "Horário: " + root.time
+        font_size: "14sp"
+        size_hint_y: None
+        height: "20dp"
         halign: "left"
 
 MDScreen:
