@@ -1,21 +1,28 @@
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import ScreenManager, Screen 
 from kivymd.app import MDApp
 from kivy.lang import Builder
-from kivy.properties import StringProperty, ListProperty, BooleanProperty
-from kivymd.uix.behaviors import FakeRectangularElevationBehavior
-from kivymd.uix.floatlayout import MDFloatLayout
-from kivy.core.window import Window
+from kivy.properties import StringProperty, BooleanProperty
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton, MDIconButton
-from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.pickers import MDDatePicker
 from datetime import datetime
+from kivy.core.window import Window
+
+# Importações necessárias para a aba customizada
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.tab import MDTabsBase
 
 Window.size = (350, 600)
+
+# Classe customizada para as abas
+class MyTab(BoxLayout, MDTabsBase):
+    pass
 
 class DialogContent(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Define a data atual como padrão
         self.selected_date = datetime.now().strftime('%d/%m/%Y')
 
     def show_date_picker(self):
@@ -40,8 +47,9 @@ class ToDoCard(MDBoxLayout):
 class ToDoApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Lista que armazenará as tarefas (cada tarefa é um dicionário)
         self.tasks = []
-        self.dialog = None  # Armazena o diálogo para evitar recriação
+        self.dialog = None  # Diálogo para criação de tarefas (para evitar recriação)
 
     def build(self):
         self.theme_cls.primary_palette = "Green"
@@ -49,7 +57,7 @@ class ToDoApp(MDApp):
         return Builder.load_file('todo.kv')
 
     def show_task_dialog(self):
-        if not self.dialog:  # Cria o diálogo apenas se ainda não existir
+        if not self.dialog:
             self.dialog_content = DialogContent()
             self.dialog = MDDialog(
                 title="Nova Tarefa",
@@ -76,8 +84,9 @@ class ToDoApp(MDApp):
         title = self.dialog_content.ids.title_input.text
         description = self.dialog_content.ids.description_input.text or ""
         date = self.dialog_content.selected_date
-        
+
         if title.strip():
+            # Adiciona a nova tarefa (guarda o objeto tarefa)
             self.tasks.append({
                 'title': title,
                 'description': description,
@@ -89,35 +98,73 @@ class ToDoApp(MDApp):
             self.dialog_content.ids.title_input.text = ""
             self.dialog_content.ids.description_input.text = ""
 
-    def on_complete(self, checkbox, value, task_index):
-        if 0 <= task_index < len(self.tasks):
-            self.tasks[task_index]['completed'] = value
+    def on_complete(self, checkbox, value, task_item):
+        # Encontra a tarefa na lista e atualiza seu status
+        try:
+            idx = self.tasks.index(task_item)
+            self.tasks[idx]['completed'] = value
+        except ValueError:
+            pass
+        self.update_tasks()
 
-    def delete_task(self, task_index):
-        if 0 <= task_index < len(self.tasks):
-            self.tasks.pop(task_index)
-            self.update_tasks()
+    def delete_task(self, instance, task_item):
+        try:
+            self.tasks.remove(task_item)
+        except ValueError:
+            pass
+        self.update_tasks()
 
     def update_tasks(self):
-        container = self.root.ids.task_container
-        container.clear_widgets()
-        
-        for index, task in enumerate(self.tasks):
+        # Recupera os contêineres definidos no KV
+        pending_container = self.root.ids.pending_tasks_container
+        completed_container = self.root.ids.completed_tasks_container
+
+        # Limpa os contêineres para evitar duplicações
+        pending_container.clear_widgets()
+        completed_container.clear_widgets()
+
+        # Separa e ordena as tarefas pendentes e concluídas por data
+        pending_tasks = sorted(
+            [task for task in self.tasks if not task['completed']],
+            key=lambda x: datetime.strptime(x['date'], '%d/%m/%Y')
+        )
+        completed_tasks = sorted(
+            [task for task in self.tasks if task['completed']],
+            key=lambda x: datetime.strptime(x['date'], '%d/%m/%Y')
+        )
+
+        # Cria os cards para tarefas pendentes
+        for task in pending_tasks:
             card = ToDoCard(
                 title=task['title'],
                 description=task['description'],
                 date=task['date'],
                 completed=task['completed']
             )
-            
+            # Usa o próprio objeto da tarefa para os _bindings_
             card.ids.checkbox.bind(
-                active=lambda cb, value, idx=index: self.on_complete(cb, value, idx)
+                active=lambda cb, value, task_item=task: self.on_complete(cb, value, task_item)
             )
             card.ids.delete_button.bind(
-                on_release=lambda btn, idx=index: self.delete_task(idx)
+                on_release=lambda btn, task_item=task: self.delete_task(btn, task_item)
             )
-            
-            container.add_widget(card)
+            pending_container.add_widget(card)
+
+        # Cria os cards para tarefas concluídas
+        for task in completed_tasks:
+            card = ToDoCard(
+                title=task['title'],
+                description=task['description'],
+                date=task['date'],
+                completed=task['completed']
+            )
+            card.ids.checkbox.bind(
+                active=lambda cb, value, task_item=task: self.on_complete(cb, value, task_item)
+            )
+            card.ids.delete_button.bind(
+                on_release=lambda btn, task_item=task: self.delete_task(btn, task_item)
+            )
+            completed_container.add_widget(card)
 
 if __name__ == '__main__':
     ToDoApp().run()
