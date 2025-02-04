@@ -20,13 +20,13 @@ class MyTab(BoxLayout, MDTabsBase):
     pass
 
 class DialogContent(MDBoxLayout):
-    # Declaramos as propriedades para que o KV as reconheça
+    # Propriedades para o KV
     selected_date = StringProperty()
     selected_time = StringProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Define os valores padrões para data e horário
+        # Valores padrões para data e horário
         self.selected_date = datetime.now().strftime('%d/%m/%Y')
         self.selected_time = datetime.now().strftime('%H:%M')
 
@@ -62,14 +62,17 @@ class ToDoCard(MDBoxLayout):
 class ToDoApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Lista que armazenará as tarefas (cada tarefa é um dicionário)
+        # Lista de tarefas; cada tarefa é um dicionário
         self.tasks = []
-        self.dialog = None  # Diálogo para criação de tarefas (para evitar recriação)
+        self.dialog = None  # Diálogo para criação de tarefas
+        self.task_to_delete = None  # Armazena a tarefa a ser excluída
+        self.delete_dialog = None  # Caixa de diálogo de confirmação
 
     def build(self):
         self.theme_cls.primary_palette = "Green"
         self.theme_cls.theme_style = "Light"
-       # return Builder.load_file('todo.kv')
+        # Carrega o arquivo KV (chamado apenas uma vez)
+        #return Builder.load_file('todo.kv')
 
     def show_task_dialog(self):
         if not self.dialog:
@@ -102,7 +105,6 @@ class ToDoApp(MDApp):
         time = self.dialog_content.selected_time
 
         if title.strip():
-            # Adiciona a nova tarefa (incluindo o horário)
             self.tasks.append({
                 'title': title,
                 'description': description,
@@ -124,11 +126,35 @@ class ToDoApp(MDApp):
         self.update_tasks()
 
     def delete_task(self, instance, task_item):
+        # Em vez de excluir imediatamente, exibe a caixa de confirmação.
+        self.task_to_delete = task_item
+        self.delete_dialog = MDDialog(
+            title="Confirmar Exclusão",
+            text="Você realmente deseja excluir esta tarefa?",
+            buttons=[
+                MDFlatButton(
+                    text="CANCELAR",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_release=lambda x: self.delete_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="EXCLUIR",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_release=lambda x: self._confirm_delete()
+                )
+            ]
+        )
+        self.delete_dialog.open()
+
+    def _confirm_delete(self):
         try:
-            self.tasks.remove(task_item)
+            self.tasks.remove(self.task_to_delete)
         except ValueError:
             pass
         self.update_tasks()
+        self.delete_dialog.dismiss()
 
     def update_tasks(self):
         pending_container = self.root.ids.pending_tasks_container
@@ -137,7 +163,7 @@ class ToDoApp(MDApp):
         pending_container.clear_widgets()
         completed_container.clear_widgets()
 
-        # Ordena as tarefas pendentes e concluídas por data e horário
+        # Ordena as tarefas por data e horário
         def sort_key(task):
             dt_str = f"{task['date']} {task['time']}"
             return datetime.strptime(dt_str, '%d/%m/%Y %H:%M')
@@ -151,7 +177,6 @@ class ToDoApp(MDApp):
             key=sort_key
         )
 
-        # Cria os cards para as tarefas pendentes
         for task in pending_tasks:
             card = ToDoCard(
                 title=task['title'],
@@ -168,7 +193,6 @@ class ToDoApp(MDApp):
             )
             pending_container.add_widget(card)
 
-        # Cria os cards para as tarefas concluídas
         for task in completed_tasks:
             card = ToDoCard(
                 title=task['title'],
