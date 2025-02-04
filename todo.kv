@@ -3,7 +3,6 @@
     spacing: "12dp"
     size_hint_y: None
     height: "240dp"  # Altura aumentada para incluir o campo de horário
-    # Não é necessário declarar selected_date e selected_time aqui
     
     MDTextField:
         id: title_input
@@ -96,8 +95,8 @@
             id: checkbox
             size_hint: None, None
             size: "40dp", "40dp"
-            selected_color: app.theme_cls.primary_color
-            unselected_color: app.theme_cls.primary_light
+            active_color: app.theme_cls.primary_color
+            inactive_color: app.theme_cls.primary_light
         
         MDIconButton:
             id: edit_button
@@ -114,7 +113,18 @@
             text_color: app.theme_cls.primary_color
             size_hint: None, None
             size: "40dp", "40dp"
-    
+        
+        MDIconButton:
+            id: revert_button
+            icon: "undo"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.primary_color
+            size_hint: None, None
+            size: "40dp", "40dp"
+            # O botão de reverter só deve ser ativo se a tarefa estiver concluída
+            opacity: 1 if root.completed else 0
+            disabled: not root.completed
+
     MDLabel:
         id: description_label
         text: root.description

@@ -1,6 +1,5 @@
 from kivy.uix.screenmanager import ScreenManager, Screen 
 from kivymd.app import MDApp
-from kivy.lang import Builder
 from kivy.properties import StringProperty, BooleanProperty
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.dialog import MDDialog
@@ -20,7 +19,7 @@ class MyTab(BoxLayout, MDTabsBase):
     pass
 
 class DialogContent(MDBoxLayout):
-    # Propriedades para o KV
+    # Propriedades para que o KV as reconheça
     selected_date = StringProperty()
     selected_time = StringProperty()
 
@@ -67,16 +66,15 @@ class ToDoApp(MDApp):
         self.dialog = None         # Diálogo para criar/editar tarefas
         self.delete_dialog = None  # Diálogo de confirmação para exclusão
         self.task_to_edit = None   # Tarefa atualmente em edição (se houver)
+        self.revert_dialog = None  # Diálogo de confirmação para reverter tarefa
 
-    def build(self):
-        self.theme_cls.primary_palette = "Green"
-        self.theme_cls.theme_style = "Light"
-        #return Builder.load_file('todo.kv')
+    # Não chamamos explicitamente Builder.load_file() pois o KivyMD carrega automaticamente
+    # o arquivo KV seguindo a convenção de nomenclatura.
 
     def show_task_dialog(self, edit_task=None):
         """
-        Se edit_task for fornecida, abre o diálogo com os campos preenchidos para edição.
-        Caso contrário, abre o diálogo para criar nova tarefa.
+        Abre o diálogo para criar ou editar tarefa.
+        Se edit_task for fornecida, os campos são pré-preenchidos.
         """
         if not self.dialog:
             self.dialog_content = DialogContent()
@@ -99,7 +97,6 @@ class ToDoApp(MDApp):
                     ),
                 ],
             )
-        # Se for edição, preenche os campos com os dados da tarefa
         if edit_task:
             self.task_to_edit = edit_task
             self.dialog.title = "Editar Tarefa"
@@ -107,11 +104,9 @@ class ToDoApp(MDApp):
             self.dialog_content.ids.description_input.text = edit_task['description']
             self.dialog_content.selected_date = edit_task['date']
             self.dialog_content.selected_time = edit_task['time']
-            # Atualiza os labels para refletir os valores
             self.dialog_content.ids.date_label.text = f"Data: {edit_task['date']}"
             self.dialog_content.ids.time_label.text = f"Horário: {edit_task['time']}"
         else:
-            # Se for nova tarefa, limpa os campos
             self.task_to_edit = None
             self.dialog.title = "Nova Tarefa"
             self.dialog_content.ids.title_input.text = ""
@@ -130,14 +125,12 @@ class ToDoApp(MDApp):
 
         if title.strip():
             if self.task_to_edit:
-                # Atualiza a tarefa existente
                 idx = self.tasks.index(self.task_to_edit)
                 self.tasks[idx]['title'] = title
                 self.tasks[idx]['description'] = description
                 self.tasks[idx]['date'] = date
                 self.tasks[idx]['time'] = time
             else:
-                # Cria uma nova tarefa
                 self.tasks.append({
                     'title': title,
                     'description': description,
@@ -157,7 +150,7 @@ class ToDoApp(MDApp):
         self.update_tasks()
 
     def delete_task(self, instance, task_item):
-        # Exibe caixa de confirmação para exclusão
+        # Exibe caixa de diálogo para confirmar exclusão
         self.task_to_delete = task_item
         self.delete_dialog = MDDialog(
             title="Confirmar Exclusão",
@@ -187,6 +180,38 @@ class ToDoApp(MDApp):
         self.update_tasks()
         self.delete_dialog.dismiss()
 
+    def revert_task(self, instance, task_item):
+        # Exibe caixa de diálogo para confirmar a reversão da tarefa
+        self.task_to_revert = task_item
+        self.revert_dialog = MDDialog(
+            title="Desfazer conclusão",
+            text="Deseja desfazer a conclusão desta tarefa?",
+            buttons=[
+                MDFlatButton(
+                    text="CANCELAR",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_release=lambda x: self.revert_dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="CONFIRMAR",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_release=lambda x: self._confirm_revert()
+                ),
+            ]
+        )
+        self.revert_dialog.open()
+
+    def _confirm_revert(self):
+        try:
+            idx = self.tasks.index(self.task_to_revert)
+            self.tasks[idx]['completed'] = False
+        except ValueError:
+            pass
+        self.update_tasks()
+        self.revert_dialog.dismiss()
+
     def update_tasks(self):
         pending_container = self.root.ids.pending_tasks_container
         completed_container = self.root.ids.completed_tasks_container
@@ -215,7 +240,6 @@ class ToDoApp(MDApp):
                 time=task['time'],
                 completed=task['completed']
             )
-            # Vincula eventos: checkbox, botão de exclusão e edição
             card.ids.checkbox.bind(
                 active=lambda cb, value, task_item=task: self.on_complete(cb, value, task_item)
             )
@@ -243,6 +267,10 @@ class ToDoApp(MDApp):
             )
             card.ids.edit_button.bind(
                 on_release=lambda btn, task_item=task: self.show_task_dialog(edit_task=task_item)
+            )
+            # Vincula o novo botão de reverter (aparece somente em tarefas concluídas)
+            card.ids.revert_button.bind(
+                on_release=lambda btn, task_item=task: self.revert_task(btn, task_item)
             )
             completed_container.add_widget(card)
 
