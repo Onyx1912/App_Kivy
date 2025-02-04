@@ -69,7 +69,7 @@ class ToDoApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Green"
         self.theme_cls.theme_style = "Light"
-        return Builder.load_file('todo.kv')
+       # return Builder.load_file('todo.kv')
 
     def show_task_dialog(self):
         if not self.dialog:
