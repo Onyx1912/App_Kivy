@@ -3,9 +3,7 @@
     spacing: "12dp"
     size_hint_y: None
     height: "240dp"  # Altura aumentada para incluir o campo de horário
-    # Remova as linhas abaixo para usar as propriedades definidas em Python:
-    # selected_date: ""
-    # selected_time: ""
+    # Não é necessário declarar selected_date e selected_time aqui
     
     MDTextField:
         id: title_input
@@ -58,13 +56,13 @@
 <ToDoCard>:
     orientation: "vertical"
     size_hint_y: None
-    height: "120dp"
+    height: "140dp"
     padding: "16dp"
     spacing: "8dp"
     md_bg_color: 1, 1, 1, 1
     radius: [8]
     elevation: 3
-    
+
     canvas.before:
         Color:
             rgba: 0.9, 0.9, 0.9, 1
@@ -72,7 +70,7 @@
             pos: self.pos
             size: self.size
             radius: [8]
-    
+
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -85,7 +83,7 @@
             bold: True
             font_size: "16sp"
             strikethrough: root.completed
-            size_hint_x: 0.4
+            size_hint_x: 0.35
             halign: "left"
         
         MDLabel:
@@ -100,6 +98,14 @@
             size: "40dp", "40dp"
             selected_color: app.theme_cls.primary_color
             unselected_color: app.theme_cls.primary_light
+        
+        MDIconButton:
+            id: edit_button
+            icon: "pencil"
+            theme_text_color: "Custom"
+            text_color: app.theme_cls.primary_color
+            size_hint: None, None
+            size: "40dp", "40dp"
         
         MDIconButton:
             id: delete_button
@@ -127,12 +133,12 @@
 
 MDScreen:
     name: "main"
-    
+
     MDBoxLayout:
         orientation: "vertical"
         spacing: "8dp"
         padding: "16dp"
-        
+
         MDLabel:
             text: "Minhas Tarefas"
             bold: True
@@ -140,18 +146,18 @@ MDScreen:
             size_hint_y: None
             height: "48dp"
             halign: "center"
-        
+
         MDTabs:
             id: tabs
-            
+
             MyTab:
                 name: "pendentes"
                 title: "Pendentes"
-                
+
                 ScrollView:
                     do_scroll_x: False
                     do_scroll_y: True
-                    
+
                     MDBoxLayout:
                         id: pending_tasks_container
                         orientation: "vertical"
@@ -159,15 +165,15 @@ MDScreen:
                         padding: "8dp"
                         size_hint_y: None
                         height: self.minimum_height
-            
+
             MyTab:
                 name: "concluidas"
                 title: "Concluídas"
-                
+
                 ScrollView:
                     do_scroll_x: False
                     do_scroll_y: True
-                    
+
                     MDBoxLayout:
                         id: completed_tasks_container
                         orientation: "vertical"
@@ -175,11 +181,11 @@ MDScreen:
                         padding: "8dp"
                         size_hint_y: None
                         height: self.minimum_height
-        
+
         Widget:
             size_hint_y: None
             height: "80dp"
-        
+
         MDFloatingActionButton:
             icon: "plus"
             pos_hint: {"center_x": .85, "center_y": .1}

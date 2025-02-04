@@ -15,7 +15,7 @@ from kivymd.uix.tab import MDTabsBase
 
 Window.size = (350, 600)
 
-# Classe customizada para as abas
+# Classe customizada para as abas (usada no MDTabs)
 class MyTab(BoxLayout, MDTabsBase):
     pass
 
@@ -26,7 +26,7 @@ class DialogContent(MDBoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Valores padrões para data e horário
+        # Valores padrão para data e horário
         self.selected_date = datetime.now().strftime('%d/%m/%Y')
         self.selected_time = datetime.now().strftime('%H:%M')
 
@@ -62,19 +62,22 @@ class ToDoCard(MDBoxLayout):
 class ToDoApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Lista de tarefas; cada tarefa é um dicionário
+        # Lista que armazena as tarefas (cada tarefa é um dicionário)
         self.tasks = []
-        self.dialog = None  # Diálogo para criação de tarefas
-        self.task_to_delete = None  # Armazena a tarefa a ser excluída
-        self.delete_dialog = None  # Caixa de diálogo de confirmação
+        self.dialog = None         # Diálogo para criar/editar tarefas
+        self.delete_dialog = None  # Diálogo de confirmação para exclusão
+        self.task_to_edit = None   # Tarefa atualmente em edição (se houver)
 
     def build(self):
         self.theme_cls.primary_palette = "Green"
         self.theme_cls.theme_style = "Light"
-        # Carrega o arquivo KV (chamado apenas uma vez)
         #return Builder.load_file('todo.kv')
 
-    def show_task_dialog(self):
+    def show_task_dialog(self, edit_task=None):
+        """
+        Se edit_task for fornecida, abre o diálogo com os campos preenchidos para edição.
+        Caso contrário, abre o diálogo para criar nova tarefa.
+        """
         if not self.dialog:
             self.dialog_content = DialogContent()
             self.dialog = MDDialog(
@@ -89,33 +92,61 @@ class ToDoApp(MDApp):
                         on_release=lambda x: self.dialog.dismiss()
                     ),
                     MDFlatButton(
-                        text="ADICIONAR",
+                        text="SALVAR",
                         theme_text_color="Custom",
                         text_color=self.theme_cls.primary_color,
-                        on_press=lambda x: self._add_task_from_dialog()
+                        on_press=lambda x: self._save_task()
                     ),
                 ],
             )
+        # Se for edição, preenche os campos com os dados da tarefa
+        if edit_task:
+            self.task_to_edit = edit_task
+            self.dialog.title = "Editar Tarefa"
+            self.dialog_content.ids.title_input.text = edit_task['title']
+            self.dialog_content.ids.description_input.text = edit_task['description']
+            self.dialog_content.selected_date = edit_task['date']
+            self.dialog_content.selected_time = edit_task['time']
+            # Atualiza os labels para refletir os valores
+            self.dialog_content.ids.date_label.text = f"Data: {edit_task['date']}"
+            self.dialog_content.ids.time_label.text = f"Horário: {edit_task['time']}"
+        else:
+            # Se for nova tarefa, limpa os campos
+            self.task_to_edit = None
+            self.dialog.title = "Nova Tarefa"
+            self.dialog_content.ids.title_input.text = ""
+            self.dialog_content.ids.description_input.text = ""
+            self.dialog_content.selected_date = datetime.now().strftime('%d/%m/%Y')
+            self.dialog_content.selected_time = datetime.now().strftime('%H:%M')
+            self.dialog_content.ids.date_label.text = f"Data: {self.dialog_content.selected_date}"
+            self.dialog_content.ids.time_label.text = f"Horário: {self.dialog_content.selected_time}"
         self.dialog.open()
 
-    def _add_task_from_dialog(self):
+    def _save_task(self):
         title = self.dialog_content.ids.title_input.text
         description = self.dialog_content.ids.description_input.text or ""
         date = self.dialog_content.selected_date
         time = self.dialog_content.selected_time
 
         if title.strip():
-            self.tasks.append({
-                'title': title,
-                'description': description,
-                'date': date,
-                'time': time,
-                'completed': False
-            })
+            if self.task_to_edit:
+                # Atualiza a tarefa existente
+                idx = self.tasks.index(self.task_to_edit)
+                self.tasks[idx]['title'] = title
+                self.tasks[idx]['description'] = description
+                self.tasks[idx]['date'] = date
+                self.tasks[idx]['time'] = time
+            else:
+                # Cria uma nova tarefa
+                self.tasks.append({
+                    'title': title,
+                    'description': description,
+                    'date': date,
+                    'time': time,
+                    'completed': False
+                })
             self.update_tasks()
             self.dialog.dismiss()
-            self.dialog_content.ids.title_input.text = ""
-            self.dialog_content.ids.description_input.text = ""
 
     def on_complete(self, checkbox, value, task_item):
         try:
@@ -126,7 +157,7 @@ class ToDoApp(MDApp):
         self.update_tasks()
 
     def delete_task(self, instance, task_item):
-        # Em vez de excluir imediatamente, exibe a caixa de confirmação.
+        # Exibe caixa de confirmação para exclusão
         self.task_to_delete = task_item
         self.delete_dialog = MDDialog(
             title="Confirmar Exclusão",
@@ -143,7 +174,7 @@ class ToDoApp(MDApp):
                     theme_text_color="Custom",
                     text_color=self.theme_cls.primary_color,
                     on_release=lambda x: self._confirm_delete()
-                )
+                ),
             ]
         )
         self.delete_dialog.open()
@@ -163,7 +194,6 @@ class ToDoApp(MDApp):
         pending_container.clear_widgets()
         completed_container.clear_widgets()
 
-        # Ordena as tarefas por data e horário
         def sort_key(task):
             dt_str = f"{task['date']} {task['time']}"
             return datetime.strptime(dt_str, '%d/%m/%Y %H:%M')
@@ -185,11 +215,15 @@ class ToDoApp(MDApp):
                 time=task['time'],
                 completed=task['completed']
             )
+            # Vincula eventos: checkbox, botão de exclusão e edição
             card.ids.checkbox.bind(
                 active=lambda cb, value, task_item=task: self.on_complete(cb, value, task_item)
             )
             card.ids.delete_button.bind(
                 on_release=lambda btn, task_item=task: self.delete_task(btn, task_item)
+            )
+            card.ids.edit_button.bind(
+                on_release=lambda btn, task_item=task: self.show_task_dialog(edit_task=task_item)
             )
             pending_container.add_widget(card)
 
@@ -206,6 +240,9 @@ class ToDoApp(MDApp):
             )
             card.ids.delete_button.bind(
                 on_release=lambda btn, task_item=task: self.delete_task(btn, task_item)
+            )
+            card.ids.edit_button.bind(
+                on_release=lambda btn, task_item=task: self.show_task_dialog(edit_task=task_item)
             )
             completed_container.add_widget(card)
 
