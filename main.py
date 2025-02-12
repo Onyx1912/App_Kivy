@@ -1,4 +1,4 @@
-from kivy.uix.screenmanager import ScreenManager, Screen 
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
 from kivy.properties import StringProperty, BooleanProperty
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -13,6 +13,16 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.tab import MDTabsBase
 
 Window.size = (350, 600)
+
+# --------------------------
+# TELAS
+# --------------------------
+
+class LoginScreen(Screen):
+    pass
+
+class MainScreen(Screen):
+    pass
 
 # Classe customizada para as abas (usada no MDTabs)
 class MyTab(BoxLayout, MDTabsBase):
@@ -58,6 +68,9 @@ class ToDoCard(MDBoxLayout):
         super().__init__(**kwargs)
         self.adaptive_height = True
 
+# --------------------------
+# APLICATIVO
+# --------------------------
 class ToDoApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -68,9 +81,51 @@ class ToDoApp(MDApp):
         self.task_to_edit = None   # Tarefa atualmente em edição (se houver)
         self.revert_dialog = None  # Diálogo de confirmação para reverter tarefa
 
-    # Não chamamos explicitamente Builder.load_file() pois o KivyMD carrega automaticamente
-    # o arquivo KV seguindo a convenção de nomenclatura.
+    def build(self):
+        # O arquivo KV será carregado automaticamente (certifique-se de que ele se chame to_do.kv ou similar)
+        # Retornamos o widget raiz, que é o ScreenManager definido no KV.
+        return self.root
 
+    # MÉTODOS DE LOGIN
+    def do_login(self, username, password):
+        # Exemplo simples: se ambos os campos estiverem preenchidos, permite o acesso.
+        if username.strip() and password.strip():
+            self.root.current = "main"  # Troca para a tela principal
+        else:
+            error_dialog = MDDialog(
+                title="Erro de Login",
+                text="Usuário e senha são obrigatórios.",
+                buttons=[
+                    MDFlatButton(
+                        text="OK", 
+                        theme_text_color="Custom", 
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: error_dialog.dismiss()
+                    )
+                ],
+            )
+            error_dialog.open()
+
+    def do_register(self):
+        # Aqui você pode implementar a lógica de cadastro de usuário.
+        # Por enquanto, exibe apenas um diálogo informando que a funcionalidade não está implementada.
+        reg_dialog = MDDialog(
+            title="Cadastro",
+            text="Funcionalidade de cadastro não implementada.",
+            buttons=[
+                MDFlatButton(
+                    text="OK", 
+                    theme_text_color="Custom", 
+                    text_color=self.theme_cls.primary_color,
+                    on_release=lambda x: reg_dialog.dismiss()
+                )
+            ],
+        )
+        reg_dialog.open()
+
+    # --------------------------
+    # MÉTODOS PARA AS TAREFAS
+    # --------------------------
     def show_task_dialog(self, edit_task=None):
         """
         Abre o diálogo para criar ou editar tarefa.
@@ -213,8 +268,8 @@ class ToDoApp(MDApp):
         self.revert_dialog.dismiss()
 
     def update_tasks(self):
-        pending_container = self.root.ids.pending_tasks_container
-        completed_container = self.root.ids.completed_tasks_container
+        pending_container = self.root.get_screen("main").ids.pending_tasks_container
+        completed_container = self.root.get_screen("main").ids.completed_tasks_container
 
         pending_container.clear_widgets()
         completed_container.clear_widgets()
@@ -268,7 +323,6 @@ class ToDoApp(MDApp):
             card.ids.edit_button.bind(
                 on_release=lambda btn, task_item=task: self.show_task_dialog(edit_task=task_item)
             )
-            # Vincula o novo botão de reverter (aparece somente em tarefas concluídas)
             card.ids.revert_button.bind(
                 on_release=lambda btn, task_item=task: self.revert_task(btn, task_item)
             )

@@ -1,3 +1,7 @@
+#:import MDTextField kivymd.uix.textfield.MDTextField
+#:import MDRaisedButton kivymd.uix.button.MDRaisedButton
+#:import MDTextButton kivymd.uix.button.MDTextButton
+
 <DialogContent>:
     orientation: "vertical"
     spacing: "12dp"
@@ -121,7 +125,6 @@
             text_color: app.theme_cls.primary_color
             size_hint: None, None
             size: "40dp", "40dp"
-            # O botão de reverter só deve ser ativo se a tarefa estiver concluída
             opacity: 1 if root.completed else 0
             disabled: not root.completed
 
@@ -141,9 +144,53 @@
         height: "20dp"
         halign: "left"
 
-MDScreen:
-    name: "main"
+# --------------------------
+# TELA DE LOGIN
+# --------------------------
+<LoginScreen>:
+    name: "login"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "20dp"
+        spacing: "20dp"
 
+        MDLabel:
+            text: "Login"
+            halign: "center"
+            font_style: "H4"
+            size_hint_y: None
+            height: "50dp"
+
+        MDTextField:
+            id: username
+            hint_text: "Usuário"
+            required: True
+            helper_text: "Digite o usuário"
+            helper_text_mode: "on_error"
+
+        MDTextField:
+            id: password
+            hint_text: "Senha"
+            password: True
+            required: True
+            helper_text: "Digite a senha"
+            helper_text_mode: "on_error"
+
+        MDRaisedButton:
+            text: "Entrar"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.do_login(username.text, password.text)
+
+        MDTextButton:
+            text: "Cadastrar Usuário"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.do_register()
+
+# --------------------------
+# TELA PRINCIPAL (MainScreen)
+# --------------------------
+<MainScreen>:
+    name: "main"
     MDBoxLayout:
         orientation: "vertical"
         spacing: "8dp"
@@ -201,3 +248,10 @@ MDScreen:
             pos_hint: {"center_x": .85, "center_y": .1}
             elevation: 4
             on_release: app.show_task_dialog()
+
+# --------------------------
+# SCREEN MANAGER (raiz)
+# --------------------------
+ScreenManager:
+    LoginScreen:
+    MainScreen:
