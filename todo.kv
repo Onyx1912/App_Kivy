@@ -187,6 +187,48 @@
             on_release: app.do_register()
 
 # --------------------------
+# TELA DE CADASTRO
+# --------------------------
+<RegisterScreen>:
+    name: "register"
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: "20dp"
+        spacing: "20dp"
+
+        MDLabel:
+            text: "Cadastro de Usuário"
+            halign: "center"
+            font_style: "H4"
+            size_hint_y: None
+            height: "50dp"
+
+        MDTextField:
+            id: reg_username
+            hint_text: "Novo Usuário"
+            required: True
+            helper_text: "Digite o nome de usuário"
+            helper_text_mode: "on_error"
+
+        MDTextField:
+            id: reg_password
+            hint_text: "Nova Senha"
+            password: True
+            required: True
+            helper_text: "Digite a senha"
+            helper_text_mode: "on_error"
+
+        MDRaisedButton:
+            text: "Cadastrar"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.register_user(reg_username.text, reg_password.text)
+
+        MDTextButton:
+            text: "Voltar para Login"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.go_to_login()
+
+# --------------------------
 # TELA PRINCIPAL (MainScreen)
 # --------------------------
 <MainScreen>:
@@ -254,4 +296,5 @@
 # --------------------------
 ScreenManager:
     LoginScreen:
+    RegisterScreen:
     MainScreen:

@@ -21,6 +21,9 @@ Window.size = (350, 600)
 class LoginScreen(Screen):
     pass
 
+class RegisterScreen(Screen):
+    pass
+
 class MainScreen(Screen):
     pass
 
@@ -72,7 +75,11 @@ class DialogContent(MDBoxLayout):
         time_dialog.open()
 
     def on_time_save(self, instance, time_obj):
-        self.selected_time = time_obj.strftime("%H:%M")
+        # Se o objeto retornado não tiver o método strftime (por exemplo, ao selecionar a hora 0), define manualmente
+        if not hasattr(time_obj, "strftime"):
+            self.selected_time = "00:00"
+        else:
+            self.selected_time = time_obj.strftime("%H:%M")
         self.ids.time_label.text = f"Horário: {self.selected_time}"
 
 class ToDoCard(MDBoxLayout):
@@ -99,20 +106,42 @@ class ToDoApp(MDApp):
         self.task_to_edit = None   # Tarefa atualmente em edição (se houver)
         self.revert_dialog = None  # Diálogo de confirmação para reverter tarefa
 
+        # Variáveis para armazenar credenciais do usuário cadastrado
+        self.registered_username = None
+        self.registered_password = None
+
     def build(self):
-        # O arquivo KV será carregado automaticamente (certifique-se de que ele se chame, por exemplo, to_do.kv)
-        # Retornamos o widget raiz, que é o ScreenManager definido no KV.
+        # O arquivo KV será carregado automaticamente
         return self.root
 
-    # MÉTODOS DE LOGIN
+    # --------------------------
+    # MÉTODOS DE LOGIN E CADASTRO
+    # --------------------------
     def do_login(self, username, password):
-        # Exemplo simples: se ambos os campos estiverem preenchidos, permite o acesso.
-        if username.strip() and password.strip():
+        # Verifica se há um usuário cadastrado
+        if not self.registered_username or not self.registered_password:
+            error_dialog = MDDialog(
+                title="Erro de Login",
+                text="Nenhum usuário cadastrado. Cadastre um usuário antes de fazer login.",
+                buttons=[
+                    MDFlatButton(
+                        text="OK", 
+                        theme_text_color="Custom", 
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: error_dialog.dismiss()
+                    )
+                ],
+            )
+            error_dialog.open()
+            return
+
+        # Verifica se as credenciais conferem
+        if username == self.registered_username and password == self.registered_password:
             self.root.current = "main"  # Troca para a tela principal
         else:
             error_dialog = MDDialog(
                 title="Erro de Login",
-                text="Usuário e senha são obrigatórios.",
+                text="Usuário ou senha incorretos.",
                 buttons=[
                     MDFlatButton(
                         text="OK", 
@@ -125,21 +154,47 @@ class ToDoApp(MDApp):
             error_dialog.open()
 
     def do_register(self):
-        # Aqui você pode implementar a lógica de cadastro de usuário.
-        # Por enquanto, exibe apenas um diálogo informando que a funcionalidade não está implementada.
-        reg_dialog = MDDialog(
-            title="Cadastro",
-            text="Funcionalidade de cadastro não implementada.",
+        # Navega para a tela de cadastro
+        self.root.current = "register"
+
+    def register_user(self, username, password):
+        if not username.strip() or not password.strip():
+            error_dialog = MDDialog(
+                title="Erro no Cadastro",
+                text="Nome de usuário e senha são obrigatórios.",
+                buttons=[
+                    MDFlatButton(
+                        text="OK", 
+                        theme_text_color="Custom", 
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: error_dialog.dismiss()
+                    )
+                ],
+            )
+            error_dialog.open()
+            return
+
+        self.registered_username = username
+        self.registered_password = password
+
+        success_dialog = MDDialog(
+            title="Sucesso",
+            text="Cadastro realizado com sucesso.",
             buttons=[
                 MDFlatButton(
                     text="OK", 
                     theme_text_color="Custom", 
                     text_color=self.theme_cls.primary_color,
-                    on_release=lambda x: reg_dialog.dismiss()
+                    on_release=lambda x: success_dialog.dismiss()
                 )
             ],
         )
-        reg_dialog.open()
+        # Após fechar o diálogo, volta para a tela de login
+        success_dialog.bind(on_dismiss=lambda *args: self.go_to_login())
+        success_dialog.open()
+
+    def go_to_login(self):
+        self.root.current = "login"
 
     # --------------------------
     # MÉTODOS PARA AS TAREFAS
