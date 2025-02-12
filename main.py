@@ -40,12 +40,30 @@ class DialogContent(MDBoxLayout):
         self.selected_time = datetime.now().strftime('%H:%M')
 
     def show_date_picker(self):
-        date_dialog = MDDatePicker()
+        # Define a data mínima como a data atual para bloquear datas anteriores
+        date_dialog = MDDatePicker(min_date=datetime.now().date())
         date_dialog.bind(on_save=self.on_date_save)
         date_dialog.open()
 
     def on_date_save(self, instance, value, date_range):
-        self.selected_date = value.strftime('%d/%m/%Y')
+        # Converte a data selecionada para um objeto date
+        selected = value if hasattr(value, "year") else datetime.now().date()
+        if selected < datetime.now().date():
+            error_dialog = MDDialog(
+                title="Data Inválida",
+                text="Não é permitido selecionar uma data anterior à data atual.",
+                buttons=[
+                    MDFlatButton(
+                        text="OK",
+                        theme_text_color="Custom",
+                        text_color=MDApp.get_running_app().theme_cls.primary_color,
+                        on_release=lambda x: error_dialog.dismiss()
+                    )
+                ],
+            )
+            error_dialog.open()
+            return  # Não atualiza a data se for inválida
+        self.selected_date = selected.strftime('%d/%m/%Y')
         self.ids.date_label.text = f"Data: {self.selected_date}"
 
     def show_time_picker(self):
@@ -82,7 +100,7 @@ class ToDoApp(MDApp):
         self.revert_dialog = None  # Diálogo de confirmação para reverter tarefa
 
     def build(self):
-        # O arquivo KV será carregado automaticamente (certifique-se de que ele se chame to_do.kv ou similar)
+        # O arquivo KV será carregado automaticamente (certifique-se de que ele se chame, por exemplo, to_do.kv)
         # Retornamos o widget raiz, que é o ScreenManager definido no KV.
         return self.root
 
@@ -175,22 +193,40 @@ class ToDoApp(MDApp):
     def _save_task(self):
         title = self.dialog_content.ids.title_input.text
         description = self.dialog_content.ids.description_input.text or ""
-        date = self.dialog_content.selected_date
-        time = self.dialog_content.selected_time
+        date_str = self.dialog_content.selected_date
+        # Converte a string para um objeto date
+        selected_date = datetime.strptime(date_str, '%d/%m/%Y').date()
+
+        # Validação para impedir salvar datas anteriores à data atual
+        if selected_date < datetime.now().date():
+            error_dialog = MDDialog(
+                title="Data Inválida",
+                text="Não é permitido salvar uma tarefa com data anterior à data atual.",
+                buttons=[
+                    MDFlatButton(
+                        text="OK",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=lambda x: error_dialog.dismiss()
+                    )
+                ],
+            )
+            error_dialog.open()
+            return  # Impede o salvamento da tarefa
 
         if title.strip():
             if self.task_to_edit:
                 idx = self.tasks.index(self.task_to_edit)
                 self.tasks[idx]['title'] = title
                 self.tasks[idx]['description'] = description
-                self.tasks[idx]['date'] = date
-                self.tasks[idx]['time'] = time
+                self.tasks[idx]['date'] = date_str
+                self.tasks[idx]['time'] = self.dialog_content.selected_time
             else:
                 self.tasks.append({
                     'title': title,
                     'description': description,
-                    'date': date,
-                    'time': time,
+                    'date': date_str,
+                    'time': self.dialog_content.selected_time,
                     'completed': False
                 })
             self.update_tasks()
