@@ -1,85 +1,110 @@
-#:import MDTextField kivymd.uix.textfield.MDTextField
-#:import MDRaisedButton kivymd.uix.button.MDRaisedButton
-#:import MDTextButton kivymd.uix.button.MDTextButton
-
+# ------------------------------------------------------------------------------
+# Layout para o conteúdo do diálogo de criação/edição de tarefa.
+# ------------------------------------------------------------------------------
 <DialogContent>:
     orientation: "vertical"
     spacing: "12dp"
     size_hint_y: None
-    height: "240dp"  # Altura aumentada para incluir o campo de horário
-    
+    height: "320dp"
+
+    # Campo de texto para o título da tarefa (obrigatório).
     MDTextField:
         id: title_input
         hint_text: "Nome da Tarefa"
         required: True
         helper_text_mode: "on_error"
         helper_text: "Este campo é obrigatório"
-        pos_hint: {"center_x": .5}
+        pos_hint: {"center_x": 0.5}
         size_hint_x: 1
-    
+
+    # Campo de texto para a descrição da tarefa (opcional e multiline).
     MDTextField:
         id: description_input
         hint_text: "Descrição (opcional)"
         multiline: True
-        pos_hint: {"center_x": .5}
-        size_hint_x: 1
+        pos_hint: {"center_x": 0.5}
+        size_hint_x: 1  
 
+    # Layout horizontal para exibir a data selecionada e um botão para alterá-la.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
         height: "48dp"
         spacing: "8dp"
         padding: ["0dp", "8dp", "0dp", "0dp"]
-        
+
         MDLabel:
             id: date_label
             text: "Data: " + root.selected_date
-            size_hint_x: .7
-        
+            size_hint_x: 0.7
+
         MDFlatButton:
             text: "Alterar Data"
             on_release: root.show_date_picker()
-    
+
+    # Layout horizontal para exibir o horário selecionado e um botão para alterá-lo.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
         height: "48dp"
         spacing: "8dp"
         padding: ["0dp", "8dp", "0dp", "0dp"]
-        
+
         MDLabel:
             id: time_label
             text: "Horário: " + root.selected_time
-            size_hint_x: .7
-        
+            size_hint_x: 0.7
+
         MDFlatButton:
             text: "Alterar Horário"
             on_release: root.show_time_picker()
 
+    # Layout horizontal para exibir a prioridade selecionada e um botão para alterá-la.
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: "48dp"
+        spacing: "8dp"
+        padding: ["0dp", "8dp", "0dp", "0dp"]
+
+        MDLabel:
+            id: priority_label
+            text: "Prioridade: " + root.priority.capitalize()
+            size_hint_x: 0.4
+
+        MDFlatButton:
+            id: priority_dropdown
+            text: "Selecionar Prioridade"
+            on_release: root.menu.open()
+
+# ------------------------------------------------------------------------------
+# Layout do card que representa cada tarefa na lista.
+# ------------------------------------------------------------------------------
 <ToDoCard>:
     orientation: "vertical"
     size_hint_y: None
-    height: "140dp"
+    height: "160dp"
     padding: "16dp"
     spacing: "8dp"
-    md_bg_color: 1, 1, 1, 1
+    md_bg_color: app.theme_cls.bg_light if app.theme_cls.theme_style == "Light" else app.theme_cls.bg_dark
     radius: [8]
     elevation: 3
 
     canvas.before:
         Color:
-            rgba: 0.9, 0.9, 0.9, 1
+            rgba: app.theme_cls.bg_light if app.theme_cls.theme_style == "Light" else app.theme_cls.bg_dark
         RoundedRectangle:
             pos: self.pos
             size: self.size
             radius: [8]
 
+    # Layout horizontal superior contendo título, data e botões de ação.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
         height: "40dp"
         spacing: "8dp"
-        
+
         MDLabel:
             id: title_label
             text: root.title
@@ -88,20 +113,22 @@
             strikethrough: root.completed
             size_hint_x: 0.35
             halign: "left"
-        
+
         MDLabel:
             text: root.date
             font_size: "14sp"
             size_hint_x: 0.3
             halign: "center"
-        
+
         MDCheckbox:
             id: checkbox
             size_hint: None, None
             size: "40dp", "40dp"
             active_color: app.theme_cls.primary_color
             inactive_color: app.theme_cls.primary_light
-        
+            opacity: 1 if not root.completed else 0
+            disabled: root.completed
+
         MDIconButton:
             id: edit_button
             icon: "pencil"
@@ -109,7 +136,7 @@
             text_color: app.theme_cls.primary_color
             size_hint: None, None
             size: "40dp", "40dp"
-        
+
         MDIconButton:
             id: delete_button
             icon: "delete"
@@ -117,7 +144,7 @@
             text_color: app.theme_cls.primary_color
             size_hint: None, None
             size: "40dp", "40dp"
-        
+
         MDIconButton:
             id: revert_button
             icon: "undo"
@@ -144,9 +171,16 @@
         height: "20dp"
         halign: "left"
 
-# --------------------------
-# TELA DE LOGIN
-# --------------------------
+    MDLabel:
+        text: "Prioridade: " + ("Alta" if root.priority == "high" else ("Média" if root.priority == "medium" else "Baixa"))
+        font_size: "14sp"
+        size_hint_y: None
+        height: "20dp"
+        halign: "left"
+
+# ------------------------------------------------------------------------------
+# Layout da tela de Login.
+# ------------------------------------------------------------------------------
 <LoginScreen>:
     name: "login"
     MDBoxLayout:
@@ -163,9 +197,9 @@
 
         MDTextField:
             id: username
-            hint_text: "Usuário"
+            hint_text: "Email"
             required: True
-            helper_text: "Digite o usuário"
+            helper_text: "Digite o seu email"
             helper_text_mode: "on_error"
 
         MDTextField:
@@ -186,9 +220,9 @@
             pos_hint: {"center_x": 0.5}
             on_release: app.do_register()
 
-# --------------------------
-# TELA DE CADASTRO
-# --------------------------
+# ------------------------------------------------------------------------------
+# Layout da tela de Cadastro de Usuário.
+# ------------------------------------------------------------------------------
 <RegisterScreen>:
     name: "register"
     MDBoxLayout:
@@ -205,17 +239,17 @@
 
         MDTextField:
             id: reg_username
-            hint_text: "Novo Usuário"
-            required: True
-            helper_text: "Digite o nome de usuário"
+            hint_text: "Email"
+            required: True 
+            helper_text: "Digite seu email (@ufrpe.br)"
             helper_text_mode: "on_error"
 
         MDTextField:
             id: reg_password
-            hint_text: "Nova Senha"
+            hint_text: "Senha"
             password: True
             required: True
-            helper_text: "Digite a senha"
+            helper_text: "Digite a senha (mín. 6 caracteres)"
             helper_text_mode: "on_error"
 
         MDRaisedButton:
@@ -228,9 +262,9 @@
             pos_hint: {"center_x": 0.5}
             on_release: app.go_to_login()
 
-# --------------------------
-# TELA PRINCIPAL (MainScreen)
-# --------------------------
+# ------------------------------------------------------------------------------
+# Layout da tela principal onde as tarefas são exibidas.
+# ------------------------------------------------------------------------------
 <MainScreen>:
     name: "main"
     MDBoxLayout:
@@ -238,13 +272,38 @@
         spacing: "8dp"
         padding: "16dp"
 
-        MDLabel:
-            text: "Minhas Tarefas"
-            bold: True
-            font_style: "H5"
+        MDTopAppBar:
+            title: "Minhas Tarefas"
+            anchor_title: "center"
+            right_action_items:
+                [["logout", lambda x: app.logout()]]
+
+        MDBoxLayout:
+            orientation: "horizontal"
             size_hint_y: None
             height: "48dp"
-            halign: "center"
+            spacing: "8dp"
+            padding: ["0dp", "8dp", "0dp", "0dp"]
+
+            MDLabel:
+                text: "Filtrar por Prioridade:"
+                size_hint_x: 0.4
+
+            MDRaisedButton:
+                text: "Todas"
+                on_release: app.set_priority_filter("all")
+
+            MDRaisedButton:
+                text: "Alta"
+                on_release: app.set_priority_filter("high")
+
+            MDRaisedButton:
+                text: "Média"
+                on_release: app.set_priority_filter("medium")
+
+            MDRaisedButton:
+                text: "Baixa"
+                on_release: app.set_priority_filter("low")
 
         MDTabs:
             id: tabs
@@ -286,14 +345,20 @@
             height: "80dp"
 
         MDFloatingActionButton:
+            icon: "brightness-4" if app.theme_cls.theme_style == "Light" else "brightness-7"
+            pos_hint: {"center_x": 0.15, "center_y": 0.1}
+            elevation: 4
+            on_release: app.toggle_theme()
+
+        MDFloatingActionButton:
             icon: "plus"
-            pos_hint: {"center_x": .85, "center_y": .1}
+            pos_hint: {"center_x": 0.85, "center_y": 0.1}
             elevation: 4
             on_release: app.show_task_dialog()
 
-# --------------------------
-# SCREEN MANAGER (raiz)
-# --------------------------
+# ------------------------------------------------------------------------------
+# ScreenManager que gerencia as telas (Login, Cadastro e Principal).
+# ------------------------------------------------------------------------------
 ScreenManager:
     LoginScreen:
     RegisterScreen:
