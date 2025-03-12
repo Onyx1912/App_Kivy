@@ -7,25 +7,22 @@
     size_hint_y: None
     height: "320dp"
 
-    # Campo de texto para o título da tarefa (obrigatório).
     MDTextField:
         id: title_input
-        hint_text: "Nome da Tarefa"
+        hint_text: app.lang["task_name"]
         required: True
         helper_text_mode: "on_error"
-        helper_text: "Este campo é obrigatório"
+        helper_text: app.lang["task_name"]
         pos_hint: {"center_x": 0.5}
         size_hint_x: 1
 
-    # Campo de texto para a descrição da tarefa (opcional e multiline).
     MDTextField:
         id: description_input
-        hint_text: "Descrição (opcional)"
+        hint_text: app.lang["task_description"]
         multiline: True
         pos_hint: {"center_x": 0.5}
         size_hint_x: 1  
 
-    # Layout horizontal para exibir a data selecionada e um botão para alterá-la.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -35,14 +32,14 @@
 
         MDLabel:
             id: date_label
-            text: "Data: " + root.selected_date
+            text: app.lang["date"] + root.selected_date
             size_hint_x: 0.7
 
         MDFlatButton:
-            text: "Alterar Data"
+            id: change_date_button
+            text: app.lang["change_date"]
             on_release: root.show_date_picker()
 
-    # Layout horizontal para exibir o horário selecionado e um botão para alterá-lo.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -52,14 +49,14 @@
 
         MDLabel:
             id: time_label
-            text: "Horário: " + root.selected_time
+            text: app.lang["time"] + root.selected_time
             size_hint_x: 0.7
 
         MDFlatButton:
-            text: "Alterar Horário"
+            id: change_time_button
+            text: app.lang["change_time"]
             on_release: root.show_time_picker()
 
-    # Layout horizontal para exibir a prioridade selecionada e um botão para alterá-la.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -69,12 +66,12 @@
 
         MDLabel:
             id: priority_label
-            text: "Prioridade: " + root.priority.capitalize()
+            text: app.lang["priority"] + (app.lang["priority_high"] if root.priority=="high" else (app.lang["priority_medium"] if root.priority=="medium" else app.lang["priority_low"]))
             size_hint_x: 0.4
 
         MDFlatButton:
             id: priority_dropdown
-            text: "Selecionar Prioridade"
+            text: app.lang["select_priority"]
             on_release: root.menu.open()
 
 # ------------------------------------------------------------------------------
@@ -98,7 +95,6 @@
             size: self.size
             radius: [8]
 
-    # Layout horizontal superior contendo título, data e botões de ação.
     MDBoxLayout:
         orientation: "horizontal"
         size_hint_y: None
@@ -165,14 +161,14 @@
         halign: "left"
 
     MDLabel:
-        text: "Horário: " + root.time
+        text: app.lang["time"] + root.time
         font_size: "14sp"
         size_hint_y: None
         height: "20dp"
         halign: "left"
 
     MDLabel:
-        text: "Prioridade: " + ("Alta" if root.priority == "high" else ("Média" if root.priority == "medium" else "Baixa"))
+        text: app.lang["priority"] + (app.lang["priority_high"] if root.priority=="high" else (app.lang["priority_medium"] if root.priority=="medium" else app.lang["priority_low"]))
         font_size: "14sp"
         size_hint_y: None
         height: "20dp"
@@ -189,7 +185,7 @@
         spacing: "20dp"
 
         MDLabel:
-            text: "Login"
+            text: app.lang["login"]
             halign: "center"
             font_style: "H4"
             size_hint_y: None
@@ -197,26 +193,26 @@
 
         MDTextField:
             id: username
-            hint_text: "Email"
+            hint_text: app.lang["email"]
             required: True
-            helper_text: "Digite o seu email"
+            helper_text: app.lang["enter_email"]
             helper_text_mode: "on_error"
 
         MDTextField:
             id: password
-            hint_text: "Senha"
+            hint_text: app.lang["password"]
             password: True
             required: True
-            helper_text: "Digite a senha"
+            helper_text: app.lang["enter_password"]
             helper_text_mode: "on_error"
 
         MDRaisedButton:
-            text: "Entrar"
+            text: app.lang["enter"]
             pos_hint: {"center_x": 0.5}
             on_release: app.do_login(username.text, password.text)
 
         MDTextButton:
-            text: "Cadastrar Usuário"
+            text: app.lang["register_user"]
             pos_hint: {"center_x": 0.5}
             on_release: app.do_register()
 
@@ -231,7 +227,7 @@
         spacing: "20dp"
 
         MDLabel:
-            text: "Cadastro de Usuário"
+            text: app.lang["register_title"]
             halign: "center"
             font_style: "H4"
             size_hint_y: None
@@ -239,26 +235,26 @@
 
         MDTextField:
             id: reg_username
-            hint_text: "Email"
+            hint_text: app.lang["email"]
             required: True 
-            helper_text: "Digite seu email (@ufrpe.br)"
+            helper_text: app.lang["register_helper_email"]
             helper_text_mode: "on_error"
 
         MDTextField:
             id: reg_password
-            hint_text: "Senha"
+            hint_text: app.lang["password"]
             password: True
             required: True
-            helper_text: "Digite a senha (mín. 6 caracteres)"
+            helper_text: app.lang["register_helper_password"]
             helper_text_mode: "on_error"
 
         MDRaisedButton:
-            text: "Cadastrar"
+            text: app.lang["register"]
             pos_hint: {"center_x": 0.5}
             on_release: app.register_user(reg_username.text, reg_password.text)
 
         MDTextButton:
-            text: "Voltar para Login"
+            text: app.lang["back_to_login"]
             pos_hint: {"center_x": 0.5}
             on_release: app.go_to_login()
 
@@ -273,10 +269,10 @@
         padding: "16dp"
 
         MDTopAppBar:
-            title: "Minhas Tarefas"
+            title: app.main_title
             anchor_title: "center"
             right_action_items:
-                [["logout", lambda x: app.logout()]]
+                [["translate", lambda x: app.show_language_dialog()], ["logout", lambda x: app.logout()]]
 
         MDBoxLayout:
             orientation: "horizontal"
@@ -286,23 +282,23 @@
             padding: ["0dp", "8dp", "0dp", "0dp"]
 
             MDLabel:
-                text: "Filtrar por Prioridade:"
+                text: app.filter_priority_text
                 size_hint_x: 0.4
 
             MDRaisedButton:
-                text: "Todas"
+                text: app.filter_all
                 on_release: app.set_priority_filter("all")
 
             MDRaisedButton:
-                text: "Alta"
+                text: app.filter_high
                 on_release: app.set_priority_filter("high")
 
             MDRaisedButton:
-                text: "Média"
+                text: app.filter_medium
                 on_release: app.set_priority_filter("medium")
 
             MDRaisedButton:
-                text: "Baixa"
+                text: app.filter_low
                 on_release: app.set_priority_filter("low")
 
         MDTabs:
@@ -310,7 +306,7 @@
 
             MyTab:
                 name: "pendentes"
-                title: "Pendentes"
+                title: app.pending_tasks_text
 
                 ScrollView:
                     do_scroll_x: False
@@ -326,7 +322,7 @@
 
             MyTab:
                 name: "concluidas"
-                title: "Concluídas"
+                title: app.completed_tasks_text
 
                 ScrollView:
                     do_scroll_x: False
@@ -356,9 +352,6 @@
             elevation: 4
             on_release: app.show_task_dialog()
 
-# ------------------------------------------------------------------------------
-# ScreenManager que gerencia as telas (Login, Cadastro e Principal).
-# ------------------------------------------------------------------------------
 ScreenManager:
     LoginScreen:
     RegisterScreen:
